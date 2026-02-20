@@ -12,6 +12,6 @@ export function isAncestor(descendant: Tag, ancestor: Tag) {
 
 export function reduceTags(selection: Tag[]) {
   return selection.filter(
-    (tag) => !selection.some((other) => isAncestor(tag, other)),
+    (tag) => !selection.some((other) => isAncestor(other, tag)),
   );
 }

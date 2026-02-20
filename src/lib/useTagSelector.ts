@@ -65,7 +65,10 @@ export default function useTagSelector(tags: Tag[]) {
         )
         .map((tag) => ({
           tag,
-          disabled: selected.includes(tag),
+          disabled: selected.some(
+            (selection) =>
+              selection.id === tag.id || isAncestor(selection, tag),
+          ),
           select: () => select(tag),
         })),
     [queried, select, selected, tags],

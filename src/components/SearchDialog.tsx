@@ -95,6 +95,7 @@ export default function SearchDialog({ tags }: Props) {
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Find..."
                 onBlur={handleBlur}
+                value={query}
               />
 
               <span className="top-3.75 right-3 rounded-sm border-b-2 border-gray-300 bg-gray-50 px-1 py-px text-[0.66rem] text-gray-600 ring ring-gray-400">
@@ -120,8 +121,9 @@ export default function SearchDialog({ tags }: Props) {
               {queried.map((result) => (
                 <Combobox.Option
                   key={result.tag.id}
-                  className="group flex w-full cursor-default items-center gap-1.5 rounded-sm px-3 py-1 select-none data-focus:bg-gray-200"
+                  className="group flex w-full disabled:opacity-60 disabled:cursor-not-allowed items-center gap-1.5 rounded-sm px-3 py-1 select-none data-focus:bg-gray-200"
                   onClick={() => result.select()}
+                  disabled={result.disabled}
                 >
                   {result.tag.depth === 0 ? (
                     <PiHash className="size-[1em] text-gray-500" />

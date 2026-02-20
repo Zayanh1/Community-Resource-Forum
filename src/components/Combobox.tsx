@@ -1,6 +1,7 @@
 import {
   useEffect,
   useRef,
+  type ButtonHTMLAttributes,
   type DetailedHTMLProps,
   type HTMLAttributes,
 } from "react";
@@ -112,6 +113,11 @@ export function Options({ children, ...props }: HTMLProps<HTMLDivElement>) {
   );
 }
 
-export function Option({ ...props }: HTMLProps<HTMLButtonElement>) {
+export function Option({
+  ...props
+}: DetailedHTMLProps<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  HTMLButtonElement
+>) {
   return <button {...props} />;
 }
