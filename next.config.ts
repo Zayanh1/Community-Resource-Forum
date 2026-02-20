@@ -3,7 +3,7 @@
  * for Docker builds.
  */
 import type { NextConfig } from "next";
-import "~/env";
+import { env } from "~/env";
 
 const config = {
   async redirects() {
@@ -29,6 +29,13 @@ const config = {
         permanent: false,
       },
     ];
+  },
+  images: {
+    remotePatterns: [
+      new URL(
+        `${env.S3_HOST.includes("localhost") ? "http" : "https"}://${env.S3_HOST}:${env.S3_PORT}`,
+      ),
+    ],
   },
 } satisfies NextConfig;
 

@@ -1,11 +1,15 @@
+"use server";
+
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
-import { getSession } from "~/server/auth";
+import { revalidatePath } from "next/cache";
+import { unstable_rethrow } from "next/dist/client/components/unstable-rethrow.server";
+import { redirect } from "next/navigation";
+import { expectSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { profiles } from "~/server/db/schema/tables";
 
-export async function POST(req: Request) {
-  const session = await getSession({
+export default async function editProfile(formData: FormData) {
+  const session = await expectSession({
     user: {
       with: {
         profile: {
@@ -26,18 +30,13 @@ export async function POST(req: Request) {
     },
   });
 
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const body = await req.formData();
-  const id = body.get("id");
-  const name = body.get("name");
-  const bio = body.get("bio");
-  const image = body.get("image");
-  const linkedin = body.get("linkedin");
-  const github = body.get("github");
-  const personalSite = body.get("personalSite");
+  const id = formData.get("id");
+  const name = formData.get("name");
+  const bio = formData.get("bio");
+  const image = formData.get("image");
+  const linkedin = formData.get("linkedin");
+  const github = formData.get("github");
+  const personalSite = formData.get("personalSite");
 
   const profile =
     session &&
@@ -48,7 +47,7 @@ export async function POST(req: Request) {
         )?.profile.events);
 
   if (!profile || !id || typeof id !== "string") {
-    return NextResponse.json({ error: "Invalid profile id" }, { status: 400 });
+    throw new Error("Invalid profile ID.");
   }
 
   const updates: Record<string, unknown> = {};
@@ -97,11 +96,11 @@ export async function POST(req: Request) {
 
   try {
     await db.update(profiles).set(updates).where(eq(profiles.id, id));
-    return NextResponse.redirect(new URL("/", req.url));
-  } catch (err) {
-    return NextResponse.json(
-      { error: "Update failed", details: String(err) },
-      { status: 500 },
-    );
+    revalidatePath(`/profile/${session.userProfileId}`);
+    redirect(`/profile/${session.userProfileId}`);
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error(error);
+    throw new Error("Failed to save changes to database.");
   }
 }

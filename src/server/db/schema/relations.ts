@@ -116,6 +116,10 @@ const relations = defineRelations(tables, (r) => ({
       from: r.profiles.id,
       to: r.comments.authorId,
     }),
+    uploadUsage: r.many.uploadUsages({
+      from: r.profiles.id,
+      to: r.uploadUsages.profileId,
+    }),
   },
   sessions: {
     user: r.one.users({

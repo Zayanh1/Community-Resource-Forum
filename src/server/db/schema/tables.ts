@@ -8,8 +8,10 @@ import {
   primaryKey,
   timestamp,
   uniqueIndex,
+  type AnyMySqlColumn,
 } from "drizzle-orm/mysql-core";
 import { lower } from "../utils";
+import type * as permissions from "~/server/s3/permissions";
 
 export const events = mysqlTable("event", (d) => ({
   id: d.varchar({ length: 255 }).primaryKey().$defaultFn(createId),
@@ -176,7 +178,7 @@ export const profiles = mysqlTable("profile", (d) => ({
   linkedin: d.varchar({ length: 255 }),
   github: d.varchar({ length: 255 }),
   personalSite: d.varchar({ length: 255 }),
-  image: d.varchar({ length: 255 }),
+  image: d.varchar({ length: 255 }).references((): AnyMySqlColumn => uploads.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").onUpdateNow(),
 }));
@@ -207,7 +209,7 @@ export const organizations = mysqlTable(
       .varchar({ length: 255 })
       .notNull()
       .references(() => users.profileId),
-    role: d.mysqlEnum(["member", "officer", "owner"]),
+    role: d.mysqlEnum(["member", "officer", "owner"]).notNull().default("member"),
   }),
   (t) => [
     primaryKey({ columns: [t.organizationProfileId, t.userProfileId] }),
@@ -231,3 +233,40 @@ export const sessions = mysqlTable("session", (d) => ({
       ),
     ),
 }));
+
+export const uploadPermissionTags = mysqlEnum(["profileImage"] satisfies [
+  keyof typeof permissions,
+  ...(keyof typeof permissions)[],
+]);
+
+export const uploads = mysqlTable(
+  "upload",
+  (d) => ({
+    id: d.varchar({ length: 255 }).primaryKey().$defaultFn(createId),
+    ownerId: d
+      .varchar({ length: 255 })
+      .references(() => profiles.id)
+      .notNull(),
+    createdAt: d.timestamp().notNull().defaultNow(),
+    tag: uploadPermissionTags.notNull(),
+    size: d.int().notNull(),
+    contentHash: d.varchar({ length: 255 }).notNull(),
+    verified: d.boolean().notNull().default(false),
+    type: d.varchar({ length: 255 }).notNull(),
+  }),
+  (t) => [index("owned_files_with_tag").on(t.ownerId, t.tag)],
+);
+
+export const uploadUsages = mysqlTable(
+  "upload_usage",
+  (d) => ({
+    profileId: d
+      .varchar({ length: 255 })
+      .references(() => profiles.id)
+      .notNull(),
+    tag: uploadPermissionTags.notNull(),
+    fileCount: d.int().notNull().default(0),
+    bytesWritten: d.int().notNull().default(0),
+  }),
+  (t) => [primaryKey({ columns: [t.profileId, t.tag] })],
+);

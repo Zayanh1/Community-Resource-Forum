@@ -2,6 +2,7 @@ import { desc, eq } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Avatar from "~/components/Avatar";
 import { getSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { posts, profiles } from "~/server/db/schema/tables";
@@ -60,17 +61,9 @@ export default async function ProfilePage({
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div className="md:col-span-1">
           <div className="rounded-2xl bg-white p-6 shadow-sm">
-            {profile.image ? (
-              <Image
-                alt={profile.name}
-                src={profile.image}
-                className="mb-4 h-28 w-28 rounded-full object-cover"
-              />
-            ) : (
-              <div className="mb-4 flex h-28 w-28 items-center justify-center rounded-full bg-gray-200 text-3xl font-bold text-gray-500">
-                {profile.name.charAt(0).toUpperCase()}
-              </div>
-            )}
+            <div className="text-8xl/0">
+              <Avatar {...profile} />
+            </div>
             <h1 className="text-2xl font-semibold">{profile.name}</h1>
             <p className="mb-2 text-sm text-gray-600">{profile.type}</p>
             {profile.bio && (

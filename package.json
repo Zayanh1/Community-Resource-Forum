@@ -5,18 +5,17 @@
   "type": "module",
   "scripts": {
     "aws": "docker compose run --rm aws",
-    "aws:create-bucket": "docker compose run --entrypoint='/bin/sh' --rm aws -cx \"aws s3api create-bucket --bucket=$S3_BUCKET_NAME\"",
-    "aws:disable-cors": "docker compose run --entrypoint='/bin/sh' --rm aws -cx \"aws s3api put-bucket-cors --bucket=$S3_BUCKET_NAME --cors-configuration='{\\\"CORSRules\\\":[{\\\"AllowedOrigins\\\":[\\\"*\\\"],\\\"AllowedMethods\\\":[\\\"GET\\\",\\\"POST\\\",\\\"PUT\\\",\\\"DELETE\\\",\\\"HEAD\\\"],\\\"AllowedHeaders\\\":[\\\"*\\\"]}]}'\"",
     "build": "next build",
     "check": "pnpm typecheck && pnpm lint:fix && pnpm prettier:fix",
     "db:generate": "pnpm drizzle-kit export > volumes/atlas/ddl.sql",
     "db:migrate": "docker compose run --rm atlas schema apply --config file://migrations/atlas.hcl --env local",
     "db:push": "pnpm db:generate && pnpm db:migrate",
     "db:studio": "drizzle-kit studio",
+    "s3:init": "docker compose run --rm --entrypoint=/bin/sh aws /scripts/init.sh",
     "docker:build": "docker compose create --pull=always",
     "docker:ready": "docker compose up mysql mysql-dev s3 --build --wait",
     "docker:reset": "docker compose down -v --remove-orphans",
-    "dev": "pnpm docker:ready && pnpm db:push && turbo run Next.js Drizzle-Studio",
+    "dev": "pnpm docker:ready && pnpm s3:init && pnpm db:push && turbo run Next.js Drizzle-Studio",
     "Next.js": "next dev --turbo",
     "Drizzle-Studio": "drizzle-kit studio",
     "format:check": "prettier --check \\\"**/*.{ts,tsx,js,jsx,mdx}\\\" --cache",
@@ -33,7 +32,8 @@
     "typegen": "next typegen"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.914.0",
+    "@aws-sdk/client-s3": "^3.994.0",
+    "@aws-sdk/s3-request-presigner": "^3.990.0",
     "@fullcalendar/core": "^6.1.19",
     "@fullcalendar/daygrid": "^6.1.19",
     "@fullcalendar/react": "^6.1.19",
@@ -76,6 +76,7 @@
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4.1.15",
+    "tsx": "^4.21.0",
     "turbo": "^2.8.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.2"
