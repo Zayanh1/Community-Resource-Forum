@@ -1,5 +1,28 @@
-import { useCallback, useMemo, useState } from "react";
-import { isAncestor, reduceTags, type Tag } from "./tags";
+"use client";
+
+import {
+  createContext,
+  use,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type PropsWithChildren,
+} from "react";
+import type { tags as tagsTable } from "~/server/db/schema/tables";
+import { isAncestor, reduceTags, type Tag } from "../lib/tags";
+
+const TagsContext = createContext<Promise<
+  (typeof tagsTable.$inferSelect)[]
+> | null>(null);
+
+interface TagsProviderProps extends PropsWithChildren {
+  value: Promise<(typeof tagsTable.$inferSelect)[]>;
+}
+
+export function TagsProvider({ children, value }: TagsProviderProps) {
+  return <TagsContext value={value}>{children}</TagsContext>;
+}
 
 interface Selected {
   tag: Tag;
@@ -14,10 +37,24 @@ interface Queried {
 
 /**
  *
- * @param tags Sorted by `lft`
+ * @param tags
  * @returns
  */
-export default function useTagSelector(tags: Tag[]) {
+export default function useTagSelector() {
+  const context = useContext(TagsContext);
+
+  if (!context) {
+    throw new Error(
+      "Any component with `useTagSelector()` must be a descendant of <TagsProvider />.",
+    );
+  }
+
+  const tags = use(context);
+  const sortedTags = useMemo(
+    () => tags.toSorted((a, b) => a.lft - b.lft),
+    [tags],
+  );
+
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Tag[]>([]);
 
@@ -39,25 +76,28 @@ export default function useTagSelector(tags: Tag[]) {
     () =>
       reduceTags(selected).map((tag) => ({
         tag,
-        deselect: () => deselect(tag),
+        deselect: () => {
+          console.log("deselect", tag);
+          deselect(tag);
+        },
       })),
     [selected, deselect],
   );
 
   const queried = useMemo(
     () =>
-      tags.filter(
+      sortedTags.filter(
         (tag) =>
           !reducedSelection.some(
             (result) => result.tag.id === tag.id || isAncestor(result.tag, tag),
           ) && tag.name.toLowerCase().includes(query.toLowerCase()),
       ),
-    [query, reducedSelection, tags],
+    [query, reducedSelection, sortedTags],
   );
 
   const visibleTags = useMemo<Queried[]>(
     () =>
-      tags
+      sortedTags
         .filter((tag) =>
           queried.some(
             (result) => tag.lft <= result.lft && result.rgt <= tag.rgt,
@@ -71,7 +111,7 @@ export default function useTagSelector(tags: Tag[]) {
           ),
           select: () => select(tag),
         })),
-    [queried, select, selected, tags],
+    [queried, select, selected, sortedTags],
   );
 
   return {

@@ -214,7 +214,11 @@ export function Slot({ children }: PropsWithChildren) {
               </label>
 
               <div className="col-span-full w-full text-sm">
-                <SelectProfile inputName="authorId" profiles={profiles} />
+                <SelectProfile
+                  inputName="authorId"
+                  userProfile={profiles[0]}
+                  organizationProfiles={profiles.slice(1)}
+                />
               </div>
 
               <button

@@ -9,7 +9,7 @@ import type { EmitterSource } from "react-quill-new";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
-export default function PostEditor() {
+export default function ContentEditor() {
   const [deltaContent, setDeltaContent] = useState("{}");
   const [textContent, setTextContent] = useState("");
 
@@ -28,19 +28,17 @@ export default function PostEditor() {
 
   return (
     <div className="flex w-full flex-col gap-2">
-      <label className="mx-auto flex w-full max-w-xl items-center gap-2 font-bold">
+      <label className="mx-auto flex w-full items-center gap-2 font-bold">
         <PiPencilSimpleBold /> Content
       </label>
 
-      <div className="relative -mx-8 bg-gray-200 px-8 py-4">
-        <input type="hidden" name="content" value={deltaContent} readOnly />
-        <input type="hidden" name="textContent" value={textContent} readOnly />
-        <ReactQuill
-          className="mx-auto flex h-64 w-full max-w-xl flex-col rounded-sm border border-gray-400 bg-white shadow-xs ring ring-transparent focus-within:ring-sky-600"
-          theme="snow"
-          onChange={handleChange}
-        />
-      </div>
+      <input type="hidden" name="content" value={deltaContent} readOnly />
+      <input type="hidden" name="textContent" value={textContent} readOnly />
+      <ReactQuill
+        className="mx-auto flex h-64 w-full flex-col rounded-sm border border-gray-400 bg-white shadow-xs ring ring-transparent focus-within:ring-sky-600"
+        theme="snow"
+        onChange={handleChange}
+      />
     </div>
   );
 }

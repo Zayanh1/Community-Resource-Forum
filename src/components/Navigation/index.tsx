@@ -3,46 +3,47 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   PiCalendarDotsDuotone,
-  PiCalendarPlus,
   PiCardsThreeDuotone,
   PiCaretDownBold,
   PiDetectiveDuotone,
-  PiPlus,
   PiSignInBold,
   PiSignOut,
   PiSquaresFourDuotone,
+  PiUsersThreeBold,
   PiXBold,
 } from "react-icons/pi";
 import devdog from "~/assets/devdog.png";
 import signIn from "~/server/actions/signIn";
 import signOut from "~/server/actions/signOut";
 import { getSession } from "~/server/auth";
-import { db } from "~/server/db";
-import Avatar from "./Avatar";
+import { hasPermissions } from "~/server/db/permissions";
+import Avatar from "../Avatar";
+import SearchDialog from "../SearchDialog";
+import CreatePostButton from "./CreatePostButton";
 import NavigationLink from "./NavigationLink";
-import SearchDialog from "./SearchDialog";
 
 export default async function Navigation() {
-  const tags = await db.query.tags.findMany({ orderBy: { lft: "asc" } });
   const session = await getSession({
     user: {
       with: {
         profile: true,
-        organizationOwnerships: {
+        organizationPermissions: {
+          columns: {},
           with: {
             profile: true,
+          },
+          where: {
+            RAW: hasPermissions("EDIT_PROFILE"),
           },
         },
       },
     },
   });
 
-  console.log({ session });
-
   const profiles = session
     ? [
         session.user.profile,
-        ...session.user.organizationOwnerships.map((org) => org.profile),
+        ...session.user.organizationPermissions.map((org) => org.profile),
       ]
     : null;
 
@@ -67,7 +68,7 @@ export default async function Navigation() {
             </Link>
           </h1>
 
-          <SearchDialog tags={tags} />
+          <SearchDialog />
         </div>
 
         <div className="grid auto-cols-fr grid-flow-col">
@@ -147,23 +148,15 @@ export default async function Navigation() {
 
                   <Dropdown.Separator className="mx-2 my-1.5 h-px bg-gray-400" />
 
-                  <Dropdown.Item asChild>
-                    <Link
-                      href="/create/post"
-                      className="flex items-center gap-3 py-1 pr-6 pl-3 transition-colors hover:bg-gray-200"
-                    >
-                      <PiPlus />
-                      Create Post
-                    </Link>
-                  </Dropdown.Item>
+                  <CreatePostButton />
 
                   <Dropdown.Item asChild>
                     <Link
-                      href="/create/event"
+                      href="#"
                       className="flex items-center gap-3 py-1 pr-6 pl-3 transition-colors hover:bg-gray-200"
                     >
-                      <PiCalendarPlus />
-                      Create Event
+                      <PiUsersThreeBold />
+                      Start an Organization
                     </Link>
                   </Dropdown.Item>
 

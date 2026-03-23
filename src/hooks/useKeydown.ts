@@ -1,6 +1,7 @@
 import { useCallback, useEffect, type DependencyList } from "react";
 
 interface Options {
+  target?: HTMLElement | Document;
   key: string;
   ctrlKey?: boolean;
   altKey?: boolean;
@@ -8,7 +9,7 @@ interface Options {
 }
 
 export default function useKeydown(
-  { key, ctrlKey = false, altKey = false, metaKey = false }: Options,
+  { key, target, ctrlKey = false, altKey = false, metaKey = false }: Options,
   callback: (e: KeyboardEvent) => void,
   deps: DependencyList,
 ) {
@@ -17,9 +18,11 @@ export default function useKeydown(
 
   useEffect(() => {
     const controller = new AbortController();
-    document.addEventListener(
+    (target ?? document).addEventListener(
       "keydown",
+      //@ts-expect-error The compiler struggles with the inference here and settles on too general of a type
       (e: KeyboardEvent) => {
+        console.log(target);
         if (
           e.key === key &&
           e.ctrlKey === ctrlKey &&
@@ -32,5 +35,5 @@ export default function useKeydown(
       controller,
     );
     return () => controller.abort();
-  }, [handler, key, ctrlKey, altKey, metaKey]);
+  }, [handler, key, ctrlKey, altKey, metaKey, target]);
 }

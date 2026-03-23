@@ -10,7 +10,7 @@ import {
   postVotes,
   profiles,
   tags,
-  tagsToPosts,
+  postTags,
 } from "~/server/db/schema/tables";
 
 interface PostRelation {
@@ -44,7 +44,7 @@ export default async function HomePage({
       : [];
 
   const queriedTags = alias(tags, "queriedTags");
-  const queriedTagRelations = alias(tagsToPosts, "queriedTagRelations");
+  const queriedTagRelations = alias(postTags, "queriedTagRelations");
 
   const postsResult = await db
     .select({
@@ -70,8 +70,8 @@ export default async function HomePage({
     .offset(0)
     .limit(20)
     .innerJoin(profiles, eq(profiles.id, posts.authorId))
-    .leftJoin(tagsToPosts, eq(tagsToPosts.postId, posts.id))
-    .leftJoin(tags, eq(tags.id, tagsToPosts.tagId))
+    .leftJoin(postTags, eq(postTags.postId, posts.id))
+    .leftJoin(tags, eq(tags.id, postTags.tagId))
     .leftJoin(events, eq(events.id, posts.eventId))
     .leftJoin(
       postVotes,

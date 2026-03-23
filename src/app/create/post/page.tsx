@@ -4,16 +4,16 @@ import { QuillDeltaToHtmlConverter } from "quill-delta-to-html";
 import { PiPaperPlaneTiltBold, PiUsersBold } from "react-icons/pi";
 import * as z from "zod";
 import * as zfd from "zod-form-data";
-import PostEditor from "~/components/PostEditor";
+import ContentEditor from "~/components/CreatePost/CreatePostDialog/ContentEditor";
 import SelectEvent from "~/components/SelectEvent";
 import SelectProfile from "~/components/SelectProfile";
-import SelectTags from "~/components/SelectTags";
+import SelectTags from "~/components/CreatePost/CreatePostDialog/SelectTags";
 import { authenticate, expectSession } from "~/server/auth";
 import { db } from "~/server/db";
 import {
   posts,
   tags as tagsTable,
-  tagsToPosts,
+  postTags,
 } from "~/server/db/schema/tables";
 
 const schema = zfd.formData({
@@ -99,7 +99,7 @@ export default async function CreatePost() {
       }
 
       if (tags.length > 0) {
-        await tx.insert(tagsToPosts).values(
+        await tx.insert(postTags).values(
           tags.map((tagId) => ({
             tagId,
             postId: insertedPost.id,
@@ -139,8 +139,8 @@ export default async function CreatePost() {
         </div>
       </div>
 
-      <SelectTags tags={tags} />
-      <PostEditor />
+      <SelectTags />
+      <ContentEditor />
       <SelectEvent events={events} />
 
       <button className="flex items-center gap-3 rounded-sm border-b-2 border-sky-900 bg-sky-800 px-6 py-1 text-lg font-medium text-white shadow-sm ring-1 ring-sky-950 transition-colors hover:bg-sky-50 hover:text-sky-800 focus:mt-0.5 focus:border-b-0">

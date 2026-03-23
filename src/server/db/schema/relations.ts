@@ -8,6 +8,10 @@ const relations = defineRelations(tables, (r) => ({
       to: r.profiles.id,
       optional: false,
     }),
+    minPermissionGroup: r.one.permissionGroups({
+      from: [r.events.organizerId, r.events.accessRank],
+      to: [r.permissionGroups.organizationProfileId, r.permissionGroups.rank],
+    }),
   },
   posts: {
     author: r.one.profiles({
@@ -20,8 +24,8 @@ const relations = defineRelations(tables, (r) => ({
       to: r.events.id,
     }),
     tags: r.many.tags({
-      from: r.posts.id.through(r.tagsToPosts.postId),
-      to: r.tags.id.through(r.tagsToPosts.tagId),
+      from: r.posts.id.through(r.postTags.postId),
+      to: r.tags.id.through(r.postTags.tagId),
     }),
     votes: r.many.postVotes({
       from: r.posts.id,
@@ -30,6 +34,24 @@ const relations = defineRelations(tables, (r) => ({
     comments: r.many.comments({
       from: r.posts.id,
       to: r.comments.postId,
+    }),
+    attachments: r.many.postAttachments({
+      from: r.posts.id,
+      to: r.postAttachments.postId,
+    }),
+    minPermissionGroup: r.one.permissionGroups({
+      from: [r.posts.authorId, r.posts.accessRank],
+      to: [r.permissionGroups.organizationProfileId, r.permissionGroups.rank],
+    }),
+  },
+  postAttachments: {
+    post: r.one.posts({
+      from: r.postAttachments.postId,
+      to: r.posts.id,
+    }),
+    upload: r.one.uploads({
+      from: [r.postAttachments.ownerId, r.postAttachments.contentHash],
+      to: [r.uploads.ownerId, r.uploads.contentHash],
     }),
   },
   comments: {
@@ -66,30 +88,11 @@ const relations = defineRelations(tables, (r) => ({
       from: r.users.profileId,
       to: r.organizations.userProfileId,
     }),
-    organizationOfficerships: r.many.organizations({
-      from: r.users.profileId,
-      to: r.organizations.userProfileId,
-      where: {
-        role: {
-          OR: [
-            {
-              eq: "officer",
-            },
-            {
-              eq: "owner",
-            },
-          ],
-        },
-      },
-    }),
-    organizationOwnerships: r.many.organizations({
-      from: r.users.profileId,
-      to: r.organizations.userProfileId,
-      where: {
-        role: {
-          eq: "owner",
-        },
-      },
+    organizationPermissions: r.many.permissionGroups({
+      from: r.users.profileId.through(r.organizations.userProfileId),
+      to: r.permissionGroups.organizationProfileId.through(
+        r.organizations.organizationProfileId,
+      ),
     }),
   },
   organizations: {
@@ -98,9 +101,24 @@ const relations = defineRelations(tables, (r) => ({
       to: r.profiles.id,
       optional: false,
     }),
+    events: r.many.events({
+      from: r.organizations.organizationProfileId,
+      to: r.events.organizerId,
+    }),
     members: r.many.users({
       from: r.organizations.userProfileId,
       to: r.users.profileId,
+    }),
+    permissionGroups: r.many.permissionGroups({
+      from: [r.organizations.organizationProfileId, r.organizations.rank],
+      to: [r.permissionGroups.organizationProfileId, r.permissionGroups.rank],
+    }),
+  },
+  permissionGroups: {
+    profile: r.one.profiles({
+      from: r.permissionGroups.organizationProfileId,
+      to: r.profiles.id,
+      optional: false,
     }),
   },
   profiles: {
@@ -116,9 +134,9 @@ const relations = defineRelations(tables, (r) => ({
       from: r.profiles.id,
       to: r.comments.authorId,
     }),
-    uploadUsage: r.many.uploadUsages({
+    uploads: r.many.uploads({
       from: r.profiles.id,
-      to: r.uploadUsages.profileId,
+      to: r.uploads.ownerId,
     }),
   },
   sessions: {

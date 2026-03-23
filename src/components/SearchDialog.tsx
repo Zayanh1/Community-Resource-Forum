@@ -2,23 +2,17 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { useRouter } from "next/navigation";
-import React, { useCallback, useId, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { PiHash, PiMagnifyingGlassBold, PiXBold } from "react-icons/pi";
 import * as Combobox from "~/components/Combobox";
-import useKeydown from "~/lib/useKeydown";
-import useTagSelector from "~/lib/useTagSelector";
-import type { tags as tagsTable } from "~/server/db/schema/tables";
+import useKeydown from "~/hooks/useKeydown";
+import useTagSelector from "~/hooks/useTagSelector";
 
-interface Props {
-  tags: (typeof tagsTable.$inferSelect)[];
-}
-
-export default function SearchDialog({ tags }: Props) {
+export default function SearchDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
-  const id = useId();
 
-  const { query, setQuery, queried, selected, reset } = useTagSelector(tags);
+  const { query, setQuery, queried, selected, reset } = useTagSelector();
 
   const submitQuery = useCallback(() => {
     router.push(
@@ -86,64 +80,65 @@ export default function SearchDialog({ tags }: Props) {
           </div>
 
           <div className="relative">
-            <label className="relative flex items-center gap-3 border-b border-sky-800 px-3">
-              <PiMagnifyingGlassBold className="size-4 fill-gray-400" />
+            <Combobox.Root>
+              <label className="relative flex items-center gap-3 border-b border-sky-800 px-3">
+                <PiMagnifyingGlassBold className="size-4 fill-gray-400" />
 
-              <input
-                className="w-full bg-white py-3 font-medium focus:outline-0"
-                id={id}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Find..."
-                onBlur={handleBlur}
-                value={query}
-              />
+                <input
+                  className="w-full bg-white py-3 font-medium focus:outline-0"
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Find..."
+                  onBlur={handleBlur}
+                  value={query}
+                />
 
-              <span className="top-3.75 right-3 rounded-sm border-b-2 border-gray-300 bg-gray-50 px-1 py-px text-[0.66rem] text-gray-600 ring ring-gray-400">
-                Esc
-              </span>
-            </label>
+                <span className="top-3.75 right-3 rounded-sm border-b-2 border-gray-300 bg-gray-50 px-1 py-px text-[0.66rem] text-gray-600 ring ring-gray-400">
+                  Esc
+                </span>
+              </label>
 
-            <Combobox.Options className="z-60 w-full rounded-sm p-1 transition duration-100 ease-in [--anchor-gap:--spacing(1)] empty:invisible data-leave:data-closed:opacity-0">
-              {query.length > 0 && (
-                <Combobox.Option
-                  className="group flex w-full cursor-default items-center gap-1.5 rounded-sm px-3 py-1.5 text-sm text-gray-700 select-none data-focus:bg-gray-200"
-                  onClick={submitQuery}
-                >
-                  Find posts containing
-                  <span className="font-medium text-black before:font-normal before:text-gray-700 before:content-['\201C'] after:font-normal after:text-gray-700 after:content-['\201D']">
-                    {query}
-                  </span>
-                </Combobox.Option>
-              )}
-
-              <span className="mx-auto my-1 block h-px w-[calc(100%-var(--spacing)*6)] rounded-full bg-gray-400 first:hidden last:hidden" />
-
-              {queried.map((result) => (
-                <Combobox.Option
-                  key={result.tag.id}
-                  className="group flex w-full disabled:opacity-60 disabled:cursor-not-allowed items-center gap-1.5 rounded-sm px-3 py-1 select-none data-focus:bg-gray-200"
-                  onClick={() => result.select()}
-                  disabled={result.disabled}
-                >
-                  {result.tag.depth === 0 ? (
-                    <PiHash className="size-[1em] text-gray-500" />
-                  ) : (
-                    <span
-                      className="ml-[calc(var(--spacing)*(var(--depth)*7.5))] block size-4 pr-0.5 pb-1.5"
-                      style={
-                        {
-                          "--depth": result.tag.depth,
-                        } as React.CSSProperties
-                      }
-                    >
-                      <span className="block size-full rounded-bl-sm border-b-2 border-l-2 border-gray-400" />
+              <Combobox.Options className="z-60 max-h-129.5 scroll-py-1in bg-scroll-shadow overflow-y-scroll w-full rounded-sm p-1 transition duration-100 ease-in [--anchor-gap:--spacing(1)] empty:invisible data-leave:data-closed:opacity-0">
+                {query.length > 0 && (
+                  <Combobox.Option
+                    className="group flex w-full cursor-default items-center gap-1.5 rounded-sm px-3 py-1.5 text-sm text-gray-700 select-none data-focus:bg-gray-200"
+                    onClick={submitQuery}
+                  >
+                    Find posts containing
+                    <span className="font-medium text-black before:font-normal before:text-gray-700 before:content-['\201C'] after:font-normal after:text-gray-700 after:content-['\201D']">
+                      {query}
                     </span>
-                  )}
+                  </Combobox.Option>
+                )}
 
-                  <div className="text-sm/6">{result.tag.name}</div>
-                </Combobox.Option>
-              ))}
-            </Combobox.Options>
+                <span className="mx-auto my-1 block h-px w-[calc(100%-var(--spacing)*6)] rounded-full bg-gray-400 first:hidden last:hidden" />
+
+                {queried.map((result) => (
+                  <Combobox.Option
+                    key={result.tag.id}
+                    className="group flex w-full items-center gap-1.5 rounded-sm px-3 py-1 select-none disabled:cursor-not-allowed disabled:opacity-60 data-focus:bg-gray-200"
+                    onClick={result.select}
+                    disabled={result.disabled}
+                  >
+                    {result.tag.depth === 0 ? (
+                      <PiHash className="size-[1em] text-gray-500" />
+                    ) : (
+                      <span
+                        className="ml-[calc(var(--spacing)*(var(--depth)*7.5))] block size-4 pr-0.5 pb-1.5"
+                        style={
+                          {
+                            "--depth": result.tag.depth,
+                          } as React.CSSProperties
+                        }
+                      >
+                        <span className="block size-full rounded-bl-sm border-b-2 border-l-2 border-gray-400" />
+                      </span>
+                    )}
+
+                    <div className="text-sm/6">{result.tag.name}</div>
+                  </Combobox.Option>
+                ))}
+              </Combobox.Options>
+            </Combobox.Root>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

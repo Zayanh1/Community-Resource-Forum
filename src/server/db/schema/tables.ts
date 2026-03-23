@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { type SQL, sql } from "drizzle-orm";
+import { sql, type SQL } from "drizzle-orm";
 import {
   foreignKey,
   index,
@@ -8,25 +8,36 @@ import {
   primaryKey,
   timestamp,
   uniqueIndex,
-  type AnyMySqlColumn,
 } from "drizzle-orm/mysql-core";
 import { lower } from "../utils";
-import type * as permissions from "~/server/s3/permissions";
 
-export const events = mysqlTable("event", (d) => ({
-  id: d.varchar({ length: 255 }).primaryKey().$defaultFn(createId),
-  organizerId: d
-    .varchar({ length: 255 })
-    .notNull()
-    .references(() => profiles.id),
-  title: d.varchar({ length: 255 }).notNull(),
-  start: d.datetime().notNull(),
-  end: d.datetime().notNull(),
-  allDay: d.boolean().notNull(),
-  // TODO: add recurrence rules!
-  location: d.varchar({ length: 255 }),
-  tags: d.json(),
-}));
+export const events = mysqlTable(
+  "event",
+  (d) => ({
+    id: d.varchar({ length: 255 }).primaryKey().$defaultFn(createId),
+    organizerId: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => profiles.id),
+    accessRank: d.int(),
+    title: d.varchar({ length: 255 }).notNull(),
+    description: d.text(),
+    start: d.datetime().notNull(),
+    end: d.datetime().notNull(),
+    allDay: d.boolean().notNull(),
+    rrule: d.text(),
+    location: d.text(),
+  }),
+  (t) => [
+    foreignKey({
+      columns: [t.organizerId, t.accessRank],
+      foreignColumns: [
+        permissionGroups.organizationProfileId,
+        permissionGroups.rank,
+      ],
+    }),
+  ],
+);
 
 export const posts = mysqlTable(
   "post",
@@ -38,6 +49,7 @@ export const posts = mysqlTable(
       .varchar({ length: 255 })
       .notNull()
       .references(() => profiles.id),
+    accessRank: d.int(),
     eventId: d.varchar({ length: 255 }).references(() => events.id),
     upvoteCount: d.int().notNull().default(0),
     downvoteIncorrectCount: d.int().notNull().default(0),
@@ -61,7 +73,35 @@ export const posts = mysqlTable(
     createdAt: d.timestamp().defaultNow().notNull(),
     updatedAt: d.timestamp().onUpdateNow(),
   }),
-  (t) => [index("author_idx").on(t.authorId)],
+  (t) => [
+    index("author_idx").on(t.authorId),
+    foreignKey({
+      columns: [t.authorId, t.accessRank],
+      foreignColumns: [
+        permissionGroups.organizationProfileId,
+        permissionGroups.rank,
+      ],
+    }),
+  ],
+);
+
+export const postAttachments = mysqlTable(
+  "post_attachment",
+  (d) => ({
+    ownerId: d.varchar({ length: 255 }).notNull(),
+    contentHash: d.varchar({ length: 255 }).notNull(),
+    postId: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => posts.id),
+  }),
+  (t) => [
+    primaryKey({ columns: [t.ownerId, t.contentHash] }),
+    foreignKey({
+      columns: [t.ownerId, t.contentHash],
+      foreignColumns: [uploads.ownerId, uploads.contentHash],
+    }),
+  ],
 );
 
 export const voteValue = mysqlEnum([
@@ -72,7 +112,7 @@ export const voteValue = mysqlEnum([
 ]);
 
 export const postVotes = mysqlTable(
-  "postVote",
+  "post_vote",
   (d) => ({
     userProfileId: d
       .varchar({ length: 255 })
@@ -88,7 +128,7 @@ export const postVotes = mysqlTable(
 );
 
 export const comments = mysqlTable(
-  "comments",
+  "comment",
   (d) => ({
     id: d.varchar({ length: 255 }).primaryKey().$defaultFn(createId),
     content: d.text().notNull(),
@@ -132,7 +172,7 @@ export const comments = mysqlTable(
 );
 
 export const commentVotes = mysqlTable(
-  "commentVote",
+  "comment_vote",
   (d) => ({
     userProfileId: d
       .varchar({ length: 255 })
@@ -155,19 +195,34 @@ export const tags = mysqlTable("tag", (d) => ({
   name: d.varchar({ length: 255 }).notNull().unique(),
 }));
 
-export const tagsToPosts = mysqlTable(
-  "tags_to_posts",
+export const postTags = mysqlTable(
+  "post_tag",
   (d) => ({
-    tagId: d
-      .varchar({ length: 255 })
-      .notNull()
-      .references(() => tags.id),
     postId: d
       .varchar({ length: 255 })
       .notNull()
       .references(() => posts.id),
+    tagId: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => tags.id),
   }),
-  (t) => [primaryKey({ columns: [t.tagId, t.postId] })],
+  (t) => [primaryKey({ columns: [t.postId, t.tagId] })],
+);
+
+export const eventTags = mysqlTable(
+  "event_tag",
+  (d) => ({
+    eventId: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => events.id),
+    tagId: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => tags.id),
+  }),
+  (t) => [primaryKey({ columns: [t.eventId, t.tagId] })],
 );
 
 export const profiles = mysqlTable("profile", (d) => ({
@@ -178,7 +233,6 @@ export const profiles = mysqlTable("profile", (d) => ({
   linkedin: d.varchar({ length: 255 }),
   github: d.varchar({ length: 255 }),
   personalSite: d.varchar({ length: 255 }),
-  image: d.varchar({ length: 255 }).references((): AnyMySqlColumn => uploads.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").onUpdateNow(),
 }));
@@ -198,21 +252,54 @@ export const users = mysqlTable(
   (t) => [uniqueIndex("email_idx").on(lower(t.email))],
 );
 
+export const permissionGroups = mysqlTable(
+  "organization_permission_group",
+  (d) => ({
+    organizationProfileId: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => profiles.id, {
+        onUpdate: "cascade",
+        onDelete: "cascade",
+      }),
+    permissions: d.int().default(0).notNull(),
+    display: d.boolean().default(true).notNull(),
+    rank: d.int().notNull().default(0),
+    title: d.varchar({ length: 255 }).notNull(),
+    description: d.text(),
+  }),
+  (t) => [primaryKey({ columns: [t.organizationProfileId, t.rank] })],
+);
+
 export const organizations = mysqlTable(
   "organization",
   (d) => ({
     organizationProfileId: d
       .varchar({ length: 255 })
       .notNull()
-      .references(() => profiles.id),
+      .references(() => profiles.id, {
+        onUpdate: "cascade",
+        onDelete: "cascade",
+      }),
     userProfileId: d
       .varchar({ length: 255 })
       .notNull()
-      .references(() => users.profileId),
-    role: d.mysqlEnum(["member", "officer", "owner"]).notNull().default("member"),
+      .references(() => users.profileId, {
+        onUpdate: "cascade",
+        onDelete: "cascade",
+      }),
+    rank: d.int().notNull(),
+    role: d.varchar({ length: 255 }).notNull().default("Member"),
   }),
   (t) => [
     primaryKey({ columns: [t.organizationProfileId, t.userProfileId] }),
+    foreignKey({
+      columns: [t.organizationProfileId, t.rank],
+      foreignColumns: [
+        permissionGroups.organizationProfileId,
+        permissionGroups.rank,
+      ],
+    }),
     // TODO: how can we constrain organizationId to profiles only with `profile.type = 'organization'`?
   ],
 );
@@ -234,39 +321,24 @@ export const sessions = mysqlTable("session", (d) => ({
     ),
 }));
 
-export const uploadPermissionTags = mysqlEnum(["profileImage"] satisfies [
-  keyof typeof permissions,
-  ...(keyof typeof permissions)[],
-]);
-
 export const uploads = mysqlTable(
   "upload",
   (d) => ({
-    id: d.varchar({ length: 255 }).primaryKey().$defaultFn(createId),
     ownerId: d
       .varchar({ length: 255 })
-      .references(() => profiles.id)
-      .notNull(),
-    createdAt: d.timestamp().notNull().defaultNow(),
-    tag: uploadPermissionTags.notNull(),
-    size: d.int().notNull(),
+      .notNull()
+      .references(() => profiles.id),
     contentHash: d.varchar({ length: 255 }).notNull(),
-    verified: d.boolean().notNull().default(false),
+    bucket: d.varchar({ length: 255 }).notNull(),
+    name: d.varchar({ length: 255 }).notNull(),
     type: d.varchar({ length: 255 }).notNull(),
+    size: d.int().notNull(),
+    createdAt: d.timestamp().notNull().defaultNow(),
+    verified: d.boolean().notNull().default(false),
+    expires: d.timestamp(),
   }),
-  (t) => [index("owned_files_with_tag").on(t.ownerId, t.tag)],
-);
-
-export const uploadUsages = mysqlTable(
-  "upload_usage",
-  (d) => ({
-    profileId: d
-      .varchar({ length: 255 })
-      .references(() => profiles.id)
-      .notNull(),
-    tag: uploadPermissionTags.notNull(),
-    fileCount: d.int().notNull().default(0),
-    bytesWritten: d.int().notNull().default(0),
-  }),
-  (t) => [primaryKey({ columns: [t.profileId, t.tag] })],
+  (t) => [
+    index("owner_idx").on(t.ownerId),
+    primaryKey({ columns: [t.ownerId, t.contentHash] }),
+  ],
 );

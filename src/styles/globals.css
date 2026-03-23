@@ -8,4 +8,73 @@
     var(--font-sans), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-brand: var(--font-brand), cursive;
+
+  --animate-collapsible-open: collapsibleOpen 150ms ease-out;
+  --animate-collapsible-closed: collapsibleClosed 150ms ease-in;
+}
+
+@keyframes collapsibleOpen {
+  from {
+    height: 0;
+  }
+
+  to {
+    height: var(--radix-collapsible-content-height);
+  }
+}
+
+@keyframes collapsibleClosed {
+  from {
+    height: var(--radix-collapsible-content-height);
+  }
+
+  to {
+    height: 0;
+  }
+}
+
+/* https://css-tricks.com/books/greatest-css-tricks/scroll-shadows/ */
+@utility bg-scroll-shadow {
+  background:
+    /* Shadow Cover TOP */
+    linear-gradient(white 30%, rgba(255, 255, 255, 0)) center top,
+    /* Shadow Cover BOTTOM */ linear-gradient(rgba(255, 255, 255, 0), white 70%)
+      center bottom,
+    /* Shadow TOP */
+      radial-gradient(
+        farthest-side at 50% 0,
+        rgba(0, 0, 0, 0.15),
+        rgba(0, 0, 0, 0)
+      )
+      center top,
+    /* Shadow BOTTOM */
+      radial-gradient(
+        farthest-side at 50% 100%,
+        rgba(0, 0, 0, 0.15),
+        rgba(0, 0, 0, 0)
+      )
+      center bottom,
+    linear-gradient(white);
+
+  background-repeat: no-repeat;
+  background-size:
+    100% 5rem,
+    100% 5rem,
+    100% 1rem,
+    100% 1rem,
+    100%,
+    100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
+/* https://stackoverflow.com/questions/3790935/can-i-hide-the-html5-number-input-s-spin-box */
+@utility hide-spin-controls {
+  -moz-appearance: textfield; /* Firefox */
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    /* display: none; <- Crashes Chrome on hover */
+    -webkit-appearance: none;
+    margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+  }
 }

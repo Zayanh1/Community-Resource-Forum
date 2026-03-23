@@ -9,7 +9,7 @@ import {
 } from "react-icons/pi";
 import * as z from "zod";
 import * as zfd from "zod-form-data";
-import SelectDateTimeRange from "~/components/SelectDateTimeRange";
+import SelectDateTimeRange from "~/components/CreatePost/CreatePostDialog/SelectEvent/SelectDateTimeRange";
 import SelectProfile from "~/components/SelectProfile";
 import { authenticate, expectSession } from "~/server/auth";
 import { db } from "~/server/db";
@@ -122,12 +122,10 @@ export default async function CreateEvent() {
         <div className="relative -mx-8 bg-gray-200 px-8 py-4">
           <SelectProfile
             inputName="organizerId"
-            profiles={[
-              session.user.profile,
-              ...session.user.organizationOfficerships.map(
-                (org) => org.profile,
-              ),
-            ]}
+            userProfile={session.user.profile}
+            organizationProfiles={session.user.organizationOfficerships.map(
+              (org) => org.profile,
+            )}
           />
         </div>
       </div>
@@ -140,9 +138,9 @@ export default async function CreateEvent() {
         <span className="relative -mx-8 block bg-gray-200 px-8 py-4">
           <SelectDateTimeRange
             inputNames={{
-              startDate: "startDate",
+              startDay: "startDate",
               startTime: "startTime",
-              endDate: "endDate",
+              endDay: "endDate",
               endTime: "endTime",
               allDay: "allDay",
             }}
@@ -159,7 +157,7 @@ export default async function CreateEvent() {
           <span className="relative mx-auto block w-full max-w-xl">
             <input
               className="w-full rounded-sm bg-white px-3 py-1 ring ring-gray-400"
-              name="title"
+              name="event.title"
               placeholder="My Awesome Event"
               type="text"
               required
@@ -177,7 +175,7 @@ export default async function CreateEvent() {
           <span className="relative mx-auto block w-full max-w-xl">
             <input
               className="w-full rounded-sm bg-white px-3 py-1 ring ring-gray-400"
-              name="location"
+              name="event.location"
               placeholder="(optional)"
             />
           </span>

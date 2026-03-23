@@ -48,3 +48,6 @@ yarn-error.log*
 
 # drizzle
 volumes/atlas/ddl.sql
+
+# s3 buckets/objects
+volumes/s3/buckets

@@ -1,95 +1,118 @@
 "use client";
 
-import {
-  Combobox,
-  ComboboxButton,
-  ComboboxInput,
-  ComboboxOption,
-  ComboboxOptions,
-} from "@headlessui/react";
-import { useCallback, useState } from "react";
+import * as Select from "@radix-ui/react-select";
+import { useEffect, useMemo, useState } from "react";
 import { PiCaretDownBold, PiCheckBold } from "react-icons/pi";
 import Avatar from "~/components/Avatar";
 import type { profiles } from "~/server/db/schema/tables";
 
 type Profile = (typeof profiles)["$inferSelect"];
 
-interface Props {
-  inputName: string;
-  profiles: Readonly<[Profile, ...Profile[]]>;
+interface ProfilePreviewProps {
+  profile: Profile;
 }
 
-export default function SelectProfile({ inputName, profiles }: Props) {
-  const [query, setQuery] = useState("");
-  const [value, setValue] = useState<Profile>(profiles[0]);
+function ProfilePreview({ profile }: ProfilePreviewProps) {
+  return (
+    <div className="flex items-center justify-between">
+      <p className="flex flex-1 items-center gap-2 text-black">
+        <span className="text-xl/0">
+          <Avatar {...profile} />
+        </span>
+        <span className="text-sm/none">{profile.name}</span>
+      </p>
+      <PiCheckBold className="invisible size-4 fill-black group-data-[state=checked]:visible" />
+    </div>
+  );
+}
 
-  const filteredProfiles = profiles.filter((profile) =>
-    profile.name.toLowerCase().includes(query.toLowerCase()),
+interface Props {
+  inputName: string;
+  userProfile: Profile;
+  organizationProfiles: Profile[];
+  value?: string;
+  onChange?: (value: string) => void;
+}
+
+export default function SelectProfile({
+  inputName,
+  userProfile,
+  organizationProfiles,
+  value: controlledValue,
+  onChange
+}: Props) {
+  const [value, setValue] = useState<string>(userProfile.id);
+  const selectedProfile = useMemo(
+    () => [userProfile, ...organizationProfiles].find((p) => p.id === value)!,
+    [value, userProfile, organizationProfiles],
   );
 
-  const updateSelection = useCallback((profile: Profile | null) => {
-    if (profile) {
-      setValue(profile);
-      setQuery("");
-    }
-  }, []);
+  useEffect(() => {
+    onChange?.(value)
+  }, [value, onChange]);
 
   return (
     <>
+      <Select.Root value={controlledValue ?? value} onValueChange={setValue}>
+        <Select.Trigger className="relative mx-auto w-full rounded-sm bg-white py-1.5 pr-10 pl-3 ring ring-gray-400">
+          <Select.Value aria-label={selectedProfile.name}>
+            <ProfilePreview profile={selectedProfile} />
+          </Select.Value>
+
+          <Select.Icon className="group absolute inset-y-0 top-1/2 right-0 -translate-y-1/2 px-3">
+            <PiCaretDownBold className="size-4 fill-black/60 group-data-hover:fill-black" />
+          </Select.Icon>
+        </Select.Trigger>
+
+        <Select.Portal>
+          <Select.Content
+            position="popper"
+            sideOffset={4}
+            className="group z-100 w-(--radix-select-trigger-width) rounded-md border border-gray-600 bg-white py-1.5 shadow-xl"
+          >
+            <Select.Viewport className="space-y-2">
+              <Select.Group className="space-y-0.5">
+                <Select.Label className="px-2 pb-0.5 text-[0.66rem] font-semibold tracking-wide text-gray-500 uppercase">
+                  Users
+                </Select.Label>
+                <Select.Item
+                  className="group px-3 py-1.5 transition-colors hover:bg-gray-200 data-[state=checked]:bg-gray-100"
+                  value={userProfile.id}
+                >
+                  <ProfilePreview profile={userProfile} />
+                </Select.Item>
+              </Select.Group>
+
+              {organizationProfiles.length > 0 && (
+                <>
+                  <Select.Separator className="h-px w-full bg-gray-400" />
+                  <Select.Group className="space-y-0.5">
+                    <Select.Label className="px-2 pb-0.5 text-[0.66rem] font-semibold tracking-wide text-gray-500 uppercase">
+                      Organizations
+                    </Select.Label>
+                    {[userProfile, userProfile, userProfile].map((org) => (
+                      <Select.Item
+                        className="group px-3 py-1.5 transition-colors hover:bg-gray-200 data-[state=checked]:bg-gray-100"
+                        value={org.id}
+                        key={org.id}
+                      >
+                        <ProfilePreview profile={userProfile} />
+                      </Select.Item>
+                    ))}
+                  </Select.Group>
+                </>
+              )}
+            </Select.Viewport>
+          </Select.Content>
+        </Select.Portal>
+      </Select.Root>
       <input
         type="hidden"
         name={inputName}
-        value={value?.id ?? ""}
+        value={selectedProfile.id}
         required
         readOnly
       />
-      <Combobox
-        immediate
-        value={value}
-        onChange={updateSelection}
-        onClose={() => setQuery("")}
-      >
-        <div className="relative mx-auto w-full max-w-xl">
-          <ComboboxInput
-            className="w-full rounded-sm bg-white py-1 pr-10 pl-3 ring ring-gray-400"
-            id="select-profile-combobox-input"
-            onChange={(event) => setQuery(event.target.value)}
-            displayValue={(p: Profile) => p.name}
-          />
-
-          <ComboboxButton
-            className="group absolute inset-y-0 right-0 px-3"
-            suppressHydrationWarning
-          >
-            <PiCaretDownBold className="size-4 fill-black/60 group-data-hover:fill-black" />
-          </ComboboxButton>
-        </div>
-
-        <ComboboxOptions
-          anchor="bottom"
-          transition
-          className="z-50 w-(--input-width) rounded-sm border border-gray-600 bg-white p-1 shadow-xl transition duration-100 ease-in [--anchor-gap:--spacing(1)] empty:invisible data-leave:data-closed:opacity-0"
-        >
-          {filteredProfiles.map((profile) => (
-            <ComboboxOption
-              key={profile.id}
-              value={profile}
-              className="group flex cursor-default items-center gap-2 rounded-sm px-3 py-1.5 select-none data-focus:bg-black/10"
-            >
-              <div className="flex flex-1 items-center gap-3 py-0.5 text-xl text-black">
-                <Avatar {...profile} />
-                <span className="flex flex-col gap-0.5">
-                  <span className="text-sm/[1]">{profile.name}</span>
-                  <span className="text-[0.6rem]/[1] font-bold text-gray-600 uppercase">
-                    {profile.type}
-                  </span>
-                </span>
-              </div>
-              <PiCheckBold className="invisible size-4 fill-black group-data-selected:visible" />
-            </ComboboxOption>
-          ))}
-        </ComboboxOptions>
-      </Combobox>
     </>
   );
 }

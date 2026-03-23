@@ -24,6 +24,7 @@ import VoteButton from "~/components/VoteButton";
 import formatEventTime from "~/lib/formatEventTime";
 import { getSession } from "~/server/auth";
 import { db } from "~/server/db";
+import { hasPermissions } from "~/server/db/permissions";
 import type {
   comments,
   commentVotes,
@@ -185,10 +186,13 @@ export default async function Page({
     user: {
       with: {
         profile: true,
-        organizationOfficerships: {
+        organizationPermissions: {
           with: {
             profile: true,
           },
+          where: {
+            RAW: hasPermissions("CREATE_COMMENTS"),
+          }
         },
       },
     },
@@ -307,7 +311,7 @@ export default async function Page({
   const profiles = session
     ? ([
         session.user.profile,
-        ...session.user.organizationOfficerships.map((org) => org.profile),
+        ...session.user.organizationPermissions.map((org) => org.profile),
       ] as const)
     : undefined;
 
