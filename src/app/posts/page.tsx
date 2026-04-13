@@ -35,6 +35,22 @@ export default async function HomePage({
     return [];
   });
 
+  const session = await getSession(
+    {
+      user: {
+        columns: {},
+        with: {
+          organizationPermissions: {
+            columns: {
+              organizationProfileId: true,
+              rank: true,
+            },
+          },
+        },
+      },
+    },
+  );
+
   const tagsResult =
     tagParam.length > 0
       ? await db
@@ -128,7 +144,7 @@ export default async function HomePage({
       ),
     );
 
-  const { posts, tags } = await db.transaction(async (tx) => {
+  const { posts: postsData, tags: selectedTags } = await db.transaction(async (tx) => {
     const session = await getSession(
       {
         user: {
@@ -195,10 +211,10 @@ export default async function HomePage({
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6 px-6 py-8">
-      {tags.length > 0 && (
+      {selectedTags.length > 0 && (
         <h1 className="flex flex-wrap items-center gap-1.5">
           Showing{" "}
-          {tags.map((tag) => (
+          {selectedTags.map((tag) => (
             <span
               key={tag.id}
               className="flex overflow-hidden rounded-sm border border-sky-800 shadow-xs"
@@ -212,7 +228,7 @@ export default async function HomePage({
         </h1>
       )}
 
-      {posts.map(({ author, event, votes, tags, attachments, ...post }) => (
+      {postsData.map(({ author, event, votes, tags, attachments, ...post }) => (
         <div
           className="overflow-hidden rounded-md border border-gray-300"
           key={post.id}
@@ -228,7 +244,7 @@ export default async function HomePage({
           />
         </div>
       ))}
-      {posts.length === 0 && (
+      {postsData.length === 0 && (
         <p className="max-w-prose text-center text-sm text-gray-600">
           There aren&rsquo;t any posts to display yet. Try signing in and
           publishing some!
