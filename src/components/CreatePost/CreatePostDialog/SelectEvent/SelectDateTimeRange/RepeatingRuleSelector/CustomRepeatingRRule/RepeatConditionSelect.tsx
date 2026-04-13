@@ -66,7 +66,10 @@ export default function RepeatConditionSelect({
   );
 
   return (
-    <Select.Root value={value.condition} onValueChange={updateRepeatCondition}>
+    <Select.Root
+      value={value.condition}
+      onValueChange={updateRepeatCondition}
+    >
       <Select.Trigger className="flex w-full items-center justify-between rounded-sm bg-gray-50 px-2 py-1 ring ring-gray-400">
         <Select.Value />
 

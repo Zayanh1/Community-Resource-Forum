@@ -39,7 +39,7 @@ export default function SelectProfile({
   userProfile,
   organizationProfiles,
   value: controlledValue,
-  onChange,
+  onChange
 }: Props) {
   const [value, setValue] = useState<string>(userProfile.id);
   const selectedProfile = useMemo(
@@ -48,7 +48,7 @@ export default function SelectProfile({
   );
 
   useEffect(() => {
-    onChange?.(value);
+    onChange?.(value)
   }, [value, onChange]);
 
   return (

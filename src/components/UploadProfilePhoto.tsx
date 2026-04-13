@@ -9,7 +9,7 @@ interface Props {
 
 export default function UploadProfilePhoto({ profile }: Props) {
   return (
-    <label className="flex items-center gap-4 rounded-md border border-zinc-300 bg-white px-2 py-2 shadow-xs transition-[border-color,box-shadow] hover:border-zinc-400 hover:shadow-sm">
+    <label className="flex items-center gap-4 transition-[border-color,box-shadow] px-2 py-2 bg-white border rounded-md border-zinc-300 shadow-xs hover:shadow-sm hover:border-zinc-400">
       {/* <span className="text-5xl/0">
         <Avatar {...profile} image={state?.status === "success" ? `/_uploads/${state?.data.uploadId}` : profile.image} />
       </span> */}

@@ -6,10 +6,7 @@ import { createAttachmentUpload } from "~/server/actions/post";
 import FilePicker from "../../FilePicker";
 
 export default function SelectAttachments(
-  props: Omit<
-    ComponentProps<typeof FilePicker>,
-    "value" | "onChange" | "getPresignedUrls"
-  >,
+  props: Omit<ComponentProps<typeof FilePicker>, "value" | "onChange" | "getPresignedUrls">,
 ) {
   const [files, setFiles] = useState<string[]>([]);
 
@@ -28,12 +25,7 @@ export default function SelectAttachments(
           <PiLinkBold /> Attach Files
         </span>
 
-        <FilePicker
-          {...props}
-          value={files}
-          onChange={setFiles}
-          getPresignedUrls={createAttachmentUpload}
-        />
+        <FilePicker {...props} value={files} onChange={setFiles} getPresignedUrls={createAttachmentUpload} />
       </label>
     </>
   );

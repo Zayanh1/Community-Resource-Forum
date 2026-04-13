@@ -47,11 +47,12 @@ export default function ExceptionDayPicker({
 
   const handleDaySelection = useCallback(
     (dates: Date[] = []) => {
-      const rruleDates = getRecurrences("rrule", {
-        after: Day.localToUTC(startOfMonth(previewMonth)),
-        before: Day.localToUTC(endOfMonth(previewMonth)),
-        inclusive: true,
-      }).map((d) => Day.utcToLocal(d));
+      const rruleDates =
+        getRecurrences("rrule", {
+          after: Day.localToUTC(startOfMonth(previewMonth)),
+          before: Day.localToUTC(endOfMonth(previewMonth)),
+          inclusive: true,
+        }).map((d) => Day.utcToLocal(d));
 
       onChange({
         includeDays: ({ includeDays }) =>

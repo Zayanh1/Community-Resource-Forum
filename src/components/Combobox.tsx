@@ -271,7 +271,7 @@ export function Options({
 
   if (ctx.popover) {
     return (
-      <div className="pointer-events-none contents *:pointer-events-none! *:relative *:z-100! *:w-(--radix-popper-anchor-width)">
+      <div className="contents pointer-events-none *:pointer-events-none! *:relative *:z-100! *:w-(--radix-popper-anchor-width)">
         <Popover.Content
           onOpenAutoFocus={(e) => e.preventDefault()}
           sideOffset={4}

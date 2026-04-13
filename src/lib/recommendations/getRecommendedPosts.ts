@@ -22,7 +22,7 @@ interface PostRelation {
 export async function getRecommendedPosts(
   userProfileId: string | null,
   limit = 20,
-  offset = 0,
+  offset = 0
 ): Promise<PostRelation[]> {
   const result = await db
     .select({
@@ -43,27 +43,20 @@ export async function getRecommendedPosts(
       postVotes,
       and(
         eq(postVotes.userProfileId, userProfileId ?? ""),
-        eq(postVotes.postId, posts.id),
-      ),
+        eq(postVotes.postId, posts.id)
+      )
     )
     .leftJoin(
       userInterests,
       and(
         eq(userInterests.tagId, postTags.tagId),
-        eq(userInterests.userProfileId, userProfileId ?? ""),
-      ),
+        eq(userInterests.userProfileId, userProfileId ?? "")
+      )
     )
-    .groupBy(
-      posts.id,
-      profiles.id,
-      events.id,
-      postVotes.postId,
-      postVotes.userProfileId,
-      tags.id,
-    )
+    .groupBy(posts.id, profiles.id, events.id, postVotes.postId, postVotes.userProfileId, tags.id)
     .orderBy(
       desc(sql`COALESCE(SUM(${userInterests.weight}), 0)`),
-      desc(posts.createdAt),
+      desc(posts.createdAt)
     )
     .offset(offset)
     .limit(limit);

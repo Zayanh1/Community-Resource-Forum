@@ -7,7 +7,7 @@ import {
   useState,
   type Dispatch,
   type PropsWithChildren,
-  type SetStateAction,
+  type SetStateAction
 } from "react";
 
 interface PostContext {

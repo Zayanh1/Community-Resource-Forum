@@ -10,7 +10,11 @@ import SelectProfile from "~/components/SelectProfile";
 import SelectTags from "~/components/CreatePost/CreatePostDialog/SelectTags";
 import { authenticate, expectSession } from "~/server/auth";
 import { db } from "~/server/db";
-import { posts, tags as tagsTable, postTags } from "~/server/db/schema/tables";
+import {
+  posts,
+  tags as tagsTable,
+  postTags,
+} from "~/server/db/schema/tables";
 
 const schema = zfd.formData({
   authorId: zfd.text(),

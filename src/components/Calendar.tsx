@@ -11,12 +11,7 @@ import type { profiles } from "~/server/db/schema/tables";
 
 import "tippy.js/dist/tippy.css";
 import "~/styles/calendar.css";
-import {
-  PiArrowSquareDownBold,
-  PiArrowSquareOut,
-  PiArrowSquareOutBold,
-  PiExport,
-} from "react-icons/pi";
+import { PiArrowSquareDownBold, PiArrowSquareOut, PiArrowSquareOutBold, PiExport } from "react-icons/pi";
 
 function EventTooltip({ event }: EventContentArg) {
   const start = format(event.start!, "MMM d, yyyy h:mm a");

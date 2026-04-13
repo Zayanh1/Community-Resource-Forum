@@ -97,7 +97,7 @@ export default function SearchDialog() {
                 </span>
               </label>
 
-              <Combobox.Options className="scroll-py-1in bg-scroll-shadow z-60 max-h-129.5 w-full overflow-y-scroll rounded-sm p-1 transition duration-100 ease-in [--anchor-gap:--spacing(1)] empty:invisible data-leave:data-closed:opacity-0">
+              <Combobox.Options className="z-60 max-h-129.5 scroll-py-1in bg-scroll-shadow overflow-y-scroll w-full rounded-sm p-1 transition duration-100 ease-in [--anchor-gap:--spacing(1)] empty:invisible data-leave:data-closed:opacity-0">
                 {query.length > 0 && (
                   <Combobox.Option
                     className="group flex w-full cursor-default items-center gap-1.5 rounded-sm px-3 py-1.5 text-sm text-gray-700 select-none data-focus:bg-gray-200"

@@ -4,11 +4,7 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "~/server/db";
 import { tags, userInterests, users } from "~/server/db/schema/tables";
 import { getSession } from "~/server/auth";
-import {
-  INTEREST_WEIGHTS,
-  VOTE_WEIGHT_MAP,
-  type VoteType,
-} from "~/lib/recommendations/constants";
+import { INTEREST_WEIGHTS, VOTE_WEIGHT_MAP, type VoteType } from "~/lib/recommendations/constants";
 import { revalidatePath } from "next/cache";
 
 /**
@@ -30,7 +26,7 @@ export async function saveOnboardingInterests(tagIds: string[]) {
             userProfileId: session.userProfileId,
             tagId,
             weight: INTEREST_WEIGHTS.INITIAL_SELECTION.toString(),
-          })),
+          }))
         )
         .onDuplicateKeyUpdate({
           set: {
@@ -73,7 +69,7 @@ export async function skipOnboarding() {
 export async function updateInterestsFromVote(
   postTagIds: string[],
   voteType: VoteType,
-  previousVote?: VoteType | null,
+  previousVote?: VoteType | null
 ) {
   const session = await getSession({});
   if (!session?.userProfileId || postTagIds.length === 0) {
