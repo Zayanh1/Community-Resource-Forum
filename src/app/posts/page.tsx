@@ -1,7 +1,27 @@
+import { and, between, desc, eq, or, sql, sum } from "drizzle-orm";
+import { alias } from "drizzle-orm/mysql-core";
 import { PiXBold } from "react-icons/pi";
 import Post from "~/components/Post";
 import { getSession } from "~/server/auth";
 import { db } from "~/server/db";
+import {
+  events,
+  posts,
+  postVotes,
+  profiles,
+  tags,
+  postTags,
+  userInterests,
+} from "~/server/db/schema/tables";
+
+interface PostRelation {
+  post: typeof posts.$inferSelect;
+  author: typeof profiles.$inferSelect;
+  event: typeof events.$inferSelect | null;
+  vote: typeof postVotes.$inferSelect | null;
+  tags: Map<string, typeof tags.$inferSelect>;
+  relevanceScore: number;
+}
 
 export default async function HomePage({
   searchParams,
@@ -12,9 +32,101 @@ export default async function HomePage({
     if ("t" in s && s.t !== undefined) {
       return s.t instanceof Array ? s.t : [s.t];
     }
-
     return [];
   });
+
+  const tagsResult =
+    tagParam.length > 0
+      ? await db
+          .select()
+          .from(tags)
+          .where(or(...tagParam.map((tag) => eq(tags.id, tag))))
+      : [];
+
+  const queriedTags = alias(tags, "queriedTags");
+  const queriedTagRelations = alias(postTags, "queriedTagRelations");
+
+  // Query with recommendation scoring
+  const postsResult = await db
+    .select({
+      post: posts,
+      author: profiles,
+      event: events,
+      vote: postVotes,
+      tag: tags,
+      // Calculate relevance score from user interests
+      relevanceScore: sql<string>`COALESCE(SUM(${userInterests.weight}), 0)`,
+    })
+    .from(posts)
+    .where(eq(posts.quarantined, false))
+    .leftJoin(queriedTagRelations, eq(queriedTagRelations.postId, posts.id))
+    .leftJoin(queriedTags, eq(queriedTags.id, queriedTagRelations.tagId))
+    .groupBy(
+      posts.id,
+      profiles.id,
+      events.id,
+      postVotes.postId,
+      postVotes.userProfileId,
+      tags.id,
+    )
+    .having(
+      tagsResult.length > 0
+        ? and(
+            ...tagsResult.map((tag) =>
+              sum(between(queriedTags.lft, tag.lft, tag.rgt)),
+            ),
+          )
+        : undefined,
+    )
+    // Order by relevance score (personalized), then by date
+    .orderBy(
+      desc(sql`COALESCE(SUM(${userInterests.weight}), 0)`),
+      desc(posts.createdAt),
+    )
+    .offset(0)
+    .limit(20)
+    .innerJoin(profiles, eq(profiles.id, posts.authorId))
+    .leftJoin(postTags, eq(postTags.postId, posts.id))
+    .leftJoin(tags, eq(tags.id, postTags.tagId))
+    .leftJoin(events, eq(events.id, posts.eventId))
+    .leftJoin(
+      postVotes,
+      and(
+        eq(postVotes.userProfileId, session?.userProfileId ?? ""),
+        eq(postVotes.postId, posts.id),
+      ),
+    )
+    // Join user interests for relevance scoring
+    .leftJoin(
+      userInterests,
+      and(
+        eq(userInterests.tagId, postTags.tagId),
+        eq(userInterests.userProfileId, session?.userProfileId ?? ""),
+      ),
+    )
+    .then((queryResponse) =>
+      queryResponse.reduce(
+        (results, { post, author, event, vote, tag, relevanceScore }) => {
+          if (!results.has(post.id)) {
+            results.set(post.id, {
+              post,
+              author,
+              event,
+              vote,
+              tags: new Map(),
+              relevanceScore: parseFloat(relevanceScore) || 0,
+            });
+          }
+
+          if (tag) {
+            results.get(post.id)!.tags.set(tag.id, tag);
+          }
+
+          return results;
+        },
+        new Map<string, PostRelation>(),
+      ),
+    );
 
   const { posts, tags } = await db.transaction(async (tx) => {
     const session = await getSession(
