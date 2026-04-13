@@ -24,7 +24,7 @@ export async function CreatePostProvider({ children }: PropsWithChildren) {
             profile: {
               with: {
                 uploads: true,
-              }
+              },
             },
           },
           where: {

@@ -24,7 +24,6 @@ export default Permission;
 export function hasPermissions(
   ...permissions: [keyof typeof Permission, ...(keyof typeof Permission)[]]
 ) {
-  return (alias: typeof permissionGroups) => 
-    sql`${alias.permissions} & ${permissions.reduce((sum, key) => sum & Permission[key], Number.MAX_SAFE_INTEGER)} != 0`
-  ;
+  return (alias: typeof permissionGroups) =>
+    sql`${alias.permissions} & ${permissions.reduce((sum, key) => sum & Permission[key], Number.MAX_SAFE_INTEGER)} != 0`;
 }

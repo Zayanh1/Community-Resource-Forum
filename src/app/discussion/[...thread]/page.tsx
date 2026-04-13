@@ -192,7 +192,7 @@ export default async function Page({
           },
           where: {
             RAW: hasPermissions("CREATE_COMMENTS"),
-          }
+          },
         },
       },
     },

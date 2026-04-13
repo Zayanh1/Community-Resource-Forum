@@ -258,7 +258,7 @@ export default function FilePicker({
                     <span className="w-full grow overflow-hidden overflow-ellipsis whitespace-nowrap">
                       {file.name}
                     </span>
-                    <span className="peer-disabled:block hidden text-gray-500">
+                    <span className="hidden text-gray-500 peer-disabled:block">
                       <PiCircleNotch className="animate-spin" />
                     </span>
                     <span className="pointer-events-none absolute right-0 bottom-0 block aspect-square translate-1 rounded-full bg-sky-600 p-px text-[0.66rem] text-white opacity-0 transition-opacity peer-checked:opacity-100">
