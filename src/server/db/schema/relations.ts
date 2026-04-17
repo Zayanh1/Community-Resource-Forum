@@ -43,6 +43,10 @@ const relations = defineRelations(tables, (r) => ({
       from: [r.posts.authorId, r.posts.accessRank],
       to: [r.permissionGroups.organizationProfileId, r.permissionGroups.rank],
     }),
+    collections: r.many.collectionPosts({
+      from: r.posts.id,
+      to: r.collectionPosts.postId,
+    }),
   },
   postAttachments: {
     post: r.one.posts({
@@ -93,6 +97,10 @@ const relations = defineRelations(tables, (r) => ({
       to: r.permissionGroups.organizationProfileId.through(
         r.organizations.organizationProfileId,
       ),
+    }),
+    collections: r.many.collections({
+      from: r.users.profileId,
+      to: r.collections.userProfileId,
     }),
   },
   organizations: {
@@ -161,6 +169,29 @@ const relations = defineRelations(tables, (r) => ({
         r.uploads.contentHash.through(r.postAttachments.contentHash),
       ],
       to: r.posts.id.through(r.postAttachments.postId),
+    }),
+  },
+  collections: {
+    user: r.one.users({
+      from: r.collections.userProfileId,
+      to: r.users.profileId,
+      optional: false,
+    }),
+    posts: r.many.collectionPosts({
+      from: r.collections.id,
+      to: r.collectionPosts.collectionId,
+    }),
+  },
+  collectionPosts: {
+    collection: r.one.collections({
+      from: r.collectionPosts.collectionId,
+      to: r.collections.id,
+      optional: false,
+    }),
+    post: r.one.posts({
+      from: r.collectionPosts.postId,
+      to: r.posts.id,
+      optional: false,
     }),
   },
 }));

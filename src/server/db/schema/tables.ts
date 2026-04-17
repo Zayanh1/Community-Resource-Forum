@@ -378,3 +378,33 @@ export const uploads = mysqlTable(
     primaryKey({ columns: [t.ownerId, t.contentHash] }),
   ],
 );
+
+export const collections = mysqlTable(
+  "collection",
+  (d) => ({
+    id: d.varchar({ length: 255 }).primaryKey().$defaultFn(createId),
+    userProfileId: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => users.profileId, { onDelete: "cascade" }),
+    name: d.varchar({ length: 255 }).notNull(),
+    description: d.text(),
+    createdAt: d.timestamp().defaultNow().notNull(),
+  })
+);
+
+export const collectionPosts = mysqlTable(
+  "collection_post",
+  (d) => ({
+    collectionId: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => collections.id, { onDelete: "cascade" }),
+    postId: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    createdAt: d.timestamp().defaultNow().notNull(),
+  }),
+  (t) => [primaryKey({ columns: [t.collectionId, t.postId] })]
+);

@@ -10,6 +10,7 @@ import ShareDropdown from "~/components/ShareDropdown";
 import VoteButton from "~/components/VoteButton";
 import type * as tables from "~/server/db/schema/tables";
 import AttachmentBadge from "./AttachmentBadge";
+import BookmarkButton from "./BookmarkButton";
 
 interface Props {
   post: typeof tables.posts.$inferSelect;
@@ -34,7 +35,7 @@ export default function Post({
   return (
     <article key={post.id} className="bg-white px-2">
       <div className="flex flex-col gap-2 px-2 py-4">
-        <div className="flex items-start gap-3">
+        <div className="flex items-start justify-between gap-3">
           <Link
             href={`/profile/${author.id}`}
             className="group flex flex-1 items-center gap-3 text-3xl"
@@ -49,6 +50,10 @@ export default function Post({
               </span>
             </span>
           </Link>
+          
+          <div className="flex-shrink-0 pt-1">
+            <BookmarkButton postId={post.id} />
+          </div>
         </div>
 
         {post.content && (
